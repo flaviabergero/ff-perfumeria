@@ -677,7 +677,8 @@ PRODUCTOS.forEach(p=>{ if(p.sale && p.precioSale){ p.precioNormal=p.precio; p.pr
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const fmt=n=>"$"+Math.round(n).toLocaleString("es-AR");
 const wa=m=>`https://wa.me/${TIENDA.whatsapp}?text=${encodeURIComponent(m)}`;
-const lista=p=>Math.round(p.precio/(1-TIENDA.descuentoEfectivo/100));
+const lista=p=>p.precioLista||Math.round(p.precio/(1-TIENDA.descuentoEfectivo/100));
+const offPct=p=>Math.round((1-p.precio/lista(p))*100);
 const cuota=p=>Math.round(lista(p)/TIENDA.cuotas);
 const WA='<svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2z"/></svg>';
 PRODUCTOS.forEach((p,i)=>p.id=i);
@@ -693,7 +694,7 @@ const vis=p=>p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:`<d
 function priceHTML(p){
   if(!p.precio) return `<div class="consult">Consultar precio</div>`;
   return `<div class="prices"><span class="p">${fmt(p.precio)}</span><span class="ef">transferencia</span>${p.precioNormal?`<span class="l">${fmt(p.precioNormal)}</span>`:""}</div>
-  <div class="prices" style="margin-top:2px"><span class="l">${fmt(lista(p))}</span><span class="off">−${TIENDA.descuentoEfectivo}%</span></div>
+  <div class="prices" style="margin-top:2px"><span class="l">${fmt(lista(p))}</span><span class="off">−${offPct(p)}%</span></div>
   <div class="cuo">${TIENDA.cuotas} cuotas sin interés de <b>${fmt(cuota(p))}</b></div>`;
 }
 function card(p){
@@ -836,7 +837,7 @@ function checkout(){const t=totales();if(!t.ids.length)return;const v=k=>(CK[k]|
     <h5>Medio de pago</h5>
     <div class="pay">
       <label><input type="radio" name="pago" value="mp" checked><span><b>Mercado Pago <span class="mpb">MP</span></b><small>Tarjeta de crédito en ${TIENDA.cuotas} cuotas sin interés, débito o dinero en cuenta</small></span><span class="amt">${fmt(t.li)}</span></label>
-      <label><input type="radio" name="pago" value="tr"><span><b>Transferencia</b><small>${TIENDA.descuentoEfectivo}% off — alias ffperfumeria</small></span><span class="amt">${fmt(t.ef)}</span></label>
+      <label><input type="radio" name="pago" value="tr"><span><b>Transferencia</b><small>${Math.round((1-t.ef/t.li)*100)}% off — alias ffperfumeria</small></span><span class="amt">${fmt(t.ef)}</span></label>
     </div></div>`;
   if(CK.corr)$("#ck_corr").value=CK.corr;
   $("#cFoot").innerHTML=`<div class="cfoot"><div class="trow"><span>Total a pagar</span><b id="ckTot">${fmt(t.li)}</b></div><div class="trow s" id="ckSub"><span>${TIENDA.cuotas} cuotas sin interés de</span><span>${fmt(Math.round(t.li/TIENDA.cuotas))}</span></div>
@@ -867,12 +868,12 @@ $("#items").addEventListener("click",e=>{const t=e.target;if(t.dataset.p){cart[t
 
 /* ---------- panels ---------- */
 function openP(id){const p=PRODUCTOS[id];let n=1;$("#pCat").textContent=p.cat;
-  $("#pBody").innerHTML=`<div class="pimg">${vis(p)}</div><div class="pinfo"><span class="eyebrow">${p.marca}</span><h2>${p.nombre}</h2><div class="meta">${p.ml?p.ml+" · ":""}Frasco completo · Original</div>
+  $("#pBody").innerHTML=`<div class="pimg">${vis(p)}</div><div class="pinfo"><span class="eyebrow">${p.marca}</span><h2>${p.nombre}</h2><div class="meta">${p.ml?p.ml+" · ":""}Frasco completo · Original${p.usdInfo?`<br>USD ${p.usdInfo.usd} por transferencia · USD ${p.usdInfo.usdTarjeta} con tarjeta · dólar BNA vendedor ${fmt(p.usdInfo.dolar)}`:""}</div>
     ${priceHTML(p)}
     <div class="qtyrow"><div class="qty"><button id="qm">−</button><span id="qn">1</span><button id="qp">+</button></div><button class="btn" id="qadd">Agregar al pedido</button></div>
     <a class="walink" href="${wa(msgUno(p))}" target="_blank" rel="noopener">${WA} Consultar por WhatsApp</a>
     ${HISTORIAS[p.nombre]?`<div class="historia"><h6>La historia</h6><div class="sub">${HISTORIAS[p.nombre].sub}</div>${HISTORIAS[p.nombre].txt.map(t=>`<p>${t}</p>`).join("")}<div class="firma">Una historia para llevar puesta.</div></div>`:""}
-    <div class="pben"><div><span>Envío</span><b>Gratis a sucursal</b></div><div><span>Transferencia</span><b>${TIENDA.descuentoEfectivo}% off</b></div><div><span>Tarjeta</span><b>${TIENDA.cuotas} cuotas sin interés</b></div></div></div>`;
+    <div class="pben"><div><span>Envío</span><b>Gratis a sucursal</b></div><div><span>Transferencia</span><b>${offPct(p)}% off</b></div><div><span>Tarjeta</span><b>${TIENDA.cuotas} cuotas sin interés</b></div></div></div>`;
   $("#qm").onclick=()=>{n=Math.max(1,n-1);$("#qn").textContent=n};$("#qp").onclick=()=>{n++;$("#qn").textContent=n};$("#qadd").onclick=()=>{add(id,n);closeAll()};
   $("#pBody").scrollTop=0;$("#pPanel").classList.add("on");$("#ov").classList.add("on");document.body.classList.add("lock")}
 function openCart(){updCart();closeAll(true);$("#cPanel").classList.add("on");$("#ov").classList.add("on");document.body.classList.add("lock")}
@@ -919,7 +920,10 @@ function retornoMP(){const h=new URLSearchParams(location.hash.slice(1));const e
   const msg=m?m.replace("Quiero confirmar esta compra:","Ya pagué con Mercado Pago"+(ref?" (ref. "+ref+")":"")+":"):"Hola FF Perfumería! Hice un pedido"+(ref?" (ref. "+ref+")":"");
   $("#items").innerHTML=`<div class="vacio"><h4>${T[0]}</h4><p>${T[1]}</p>${est!=="rechazado"?`<a class="btn" href="${wa(msg)}" target="_blank" rel="noopener">Avisar por WhatsApp <span class="ar">→</span></a>`:`<button class="btn" onclick="checkout()">Intentar de nuevo <span class="ar">→</span></button>`}</div>`;
   $("#cFoot").innerHTML="";closeAll(true);$("#cPanel").classList.add("on");$("#ov").classList.add("on");document.body.classList.add("lock")}
-chrome();gallery();counters();collections();rail();catalog();menuProductos();updCart();retornoMP();cursor();magnetic();
+/* Gilden: precio en pesos al dólar vendedor del BNA (igual que gildenprofumi.com) */
+async function preciosVivos(){try{const r=await fetch("/api/precios",{signal:AbortSignal.timeout(2500)});if(!r.ok)return;const g=(await r.json()).gilden;
+  if(g&&g.transferencia>0)PRODUCTOS.forEach(p=>{if(p.marca==="Gilden"){p.precio=g.transferencia;p.precioLista=g.tarjeta;p.usdInfo=g}})}catch(e){}}
+preciosVivos().finally(()=>{chrome();gallery();counters();collections();rail();catalog();menuProductos();updCart();retornoMP();cursor();magnetic();})
 {const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.12});$$(".rv").forEach(el=>io.observe(el));const io2=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll(".rvi").forEach(x=>x.classList.add("in"));io2.unobserve(e.target)}}),{threshold:.1});io2.observe($("#cols"));}
 addEventListener("load",()=>{setTimeout(()=>{$("#loader").classList.add("done");document.body.classList.add("ready")},900)});
 setTimeout(()=>{$("#loader").classList.add("done");document.body.classList.add("ready")},2500);

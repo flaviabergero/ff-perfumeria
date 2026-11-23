@@ -1,8 +1,5 @@
 [build]
   publish = "."
-  functions = "netlify/functions"
 
-[[redirects]]
-  from = "/api/pago"
-  to = "/.netlify/functions/pago"
-  status = 200
+[functions]
+  directory = "netlify/functions"

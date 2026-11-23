@@ -1,3 +1,4 @@
+import { preciosGilden, esGilden } from '../lib/dolar.mjs';
 /**
  * FF Perfumería — conector de pago con Mercado Pago (Checkout Pro)
  * Netlify Function: https://ffperfumeria.netlify.app/api/pago
@@ -13,16 +14,17 @@
 const CUOTAS_MAX = 3;            // cuotas que se muestran en el checkout
 const NOMBRE_TIENDA = "FF PERFUMERIA"; // aparece en el resumen de la tarjeta (máx. 13 caracteres útiles)
 
-exports.handler = async (event) => {
-  const env = { MP_ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN };
-  const request = { method: event.httpMethod, json: async () => JSON.parse(event.body || "{}") };
+export const config = { path: "/api/pago" };
+
+export default async (request) => {
+  const env = { MP_ACCESS_TOKEN: Netlify.env.get("MP_ACCESS_TOKEN") };
   {
     const cors = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     };
-    if (request.method === "OPTIONS") return { statusCode: 204, headers: cors, body: "" };
+    if (request.method === "OPTIONS") return new Response(null, { headers: cors });
     if (request.method !== "POST") return json({ error: "Usá POST" }, 405, cors);
     if (!env.MP_ACCESS_TOKEN) return json({ error: "Falta configurar MP_ACCESS_TOKEN" }, 500, cors);
 
@@ -35,6 +37,12 @@ exports.handler = async (event) => {
       unit_price: Math.round(Number(it.unit_price) || 0),
       currency_id: "ARS",
     })).filter((it) => it.unit_price > 0);
+    // Gilden: el precio sale del dólar BNA (USD 160 con Mercado Pago), nunca del navegador.
+    if (items.some((it) => esGilden(it.title))) {
+      const g = await preciosGilden();
+      if (!g) return json({ error: "Sin cotización del dólar" }, 503, cors);
+      items.forEach((it) => { if (esGilden(it.title)) it.unit_price = g.tarjeta; });
+    }
     if (!items.length) return json({ error: "Pedido vacío" }, 400, cors);
 
     const p = pedido.payer || {};
@@ -78,5 +86,5 @@ exports.handler = async (event) => {
 };
 
 function json(obj, status, headers) {
-  return { statusCode: status, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(obj) };
+  return new Response(JSON.stringify(obj), { status, headers: { ...headers, "Content-Type": "application/json" } });
 }
