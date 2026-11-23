@@ -1,6 +1,6 @@
 /**
  * FF Perfumería — conector de pago con Mercado Pago (Checkout Pro)
- * Netlify Function: queda en https://ffperfumeria.netlify.app/api/pago
+ * Netlify Function: https://ffperfumeria.netlify.app/api/pago
  *
  * Necesita UNA variable de entorno en Netlify (Project configuration → Environment variables):
  *   MP_ACCESS_TOKEN  → el Access Token de PRODUCCIÓN de tu aplicación de Mercado Pago
@@ -13,17 +13,16 @@
 const CUOTAS_MAX = 3;            // cuotas que se muestran en el checkout
 const NOMBRE_TIENDA = "FF PERFUMERIA"; // aparece en el resumen de la tarjeta (máx. 13 caracteres útiles)
 
-export const config = { path: "/api/pago" };
-
-export default async (request) => {
-  const env = { MP_ACCESS_TOKEN: Netlify.env.get("MP_ACCESS_TOKEN") };
+exports.handler = async (event) => {
+  const env = { MP_ACCESS_TOKEN: process.env.MP_ACCESS_TOKEN };
+  const request = { method: event.httpMethod, json: async () => JSON.parse(event.body || "{}") };
   {
     const cors = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     };
-    if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+    if (request.method === "OPTIONS") return { statusCode: 204, headers: cors, body: "" };
     if (request.method !== "POST") return json({ error: "Usá POST" }, 405, cors);
     if (!env.MP_ACCESS_TOKEN) return json({ error: "Falta configurar MP_ACCESS_TOKEN" }, 500, cors);
 
@@ -79,5 +78,5 @@ export default async (request) => {
 };
 
 function json(obj, status, headers) {
-  return new Response(JSON.stringify(obj), { status, headers: { ...headers, "Content-Type": "application/json" } });
+  return { statusCode: status, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(obj) };
 }
