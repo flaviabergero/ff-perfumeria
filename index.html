@@ -833,29 +833,35 @@ function checkout(){const t=totales();if(!t.ids.length)return;const v=k=>(CK[k]|
     <input id="ck_nom" placeholder="Nombre y apellido" value="${v("nom")}" autocomplete="name">
     <div class="f2"><input id="ck_dni" placeholder="DNI" inputmode="numeric" value="${v("dni")}"><input id="ck_tel" placeholder="Teléfono" inputmode="tel" value="${v("tel")}" autocomplete="tel"></div>
     <input id="ck_mail" placeholder="Email" type="email" value="${v("mail")}" autocomplete="email">
-    <h5>Envío gratis a sucursal</h5>
+    <h5 id="ckEnvH">Envío gratis a sucursal</h5>
     <div class="f2"><input id="ck_prov" placeholder="Provincia" value="${v("prov")}"><input id="ck_cp" placeholder="Código postal" inputmode="numeric" value="${v("cp")}"></div>
     <input id="ck_loc" placeholder="Localidad" value="${v("loc")}">
-    <select id="ck_corr"><option value="Correo Argentino">Correo Argentino — sucursal</option><option value="Andreani">Andreani — sucursal</option></select>
+    <select id="ck_corr"><option value="Correo Argentino">Correo Argentino — sucursal</option><option value="Andreani">Andreani — sucursal</option><option value="Villa María">Soy de Villa María — coordino la entrega con la vendedora</option></select>
+    <p class="note" id="vmNote" style="display:none;margin:-2px 0 6px;font-size:13px;line-height:1.5">📍 Como sos de <b>Villa María</b>, la entrega la coordinás directamente con la vendedora por WhatsApp después de pagar. No hace falta envío.</p>
     <h5>Medio de pago</h5>
     <div class="pay">
       <label><input type="radio" name="pago" value="mp" checked><span><b>Mercado Pago <span class="mpb">MP</span></b><small>Tarjeta de crédito en ${TIENDA.cuotas} cuotas sin interés, débito o dinero en cuenta</small></span><span class="amt">${fmt(t.li)}</span></label>
       <label><input type="radio" name="pago" value="tr"><span><b>Transferencia</b><small>${Math.round((1-t.ef/t.li)*100)}% off — alias ffperfumeria</small></span><span class="amt">${fmt(t.ef)}</span></label>
     </div></div>`;
   if(CK.corr)$("#ck_corr").value=CK.corr;
+  const esVM=()=>/villa\s*mar[ií]a/i.test($("#ck_loc").value);
+  const vm=()=>{const on=$("#ck_corr").value==="Villa María";$("#vmNote").style.display=on?"":"none";$("#ckEnvH").textContent=on?"Entrega en Villa María":"Envío gratis a sucursal";["#ck_prov","#ck_cp"].forEach(s=>$(s).style.display=on?"none":"")};
+  $("#ck_loc").addEventListener("input",()=>{if(esVM()){$("#ck_corr").value="Villa María"}else if($("#ck_corr").value==="Villa María"){$("#ck_corr").value="Correo Argentino"}vm()});
+  $("#ck_corr").onchange=()=>{if($("#ck_corr").value==="Villa María"&&!esVM())$("#ck_loc").value="Villa María";vm()};
+  if(esVM())$("#ck_corr").value="Villa María";vm();
   $("#cFoot").innerHTML=`<div class="cfoot"><div class="trow"><span>Total a pagar</span><b id="ckTot">${fmt(t.li)}</b></div><div class="trow s" id="ckSub"><span>${TIENDA.cuotas} cuotas sin interés de</span><span>${fmt(Math.round(t.li/TIENDA.cuotas))}</span></div>
     <button class="btn block" id="ckGo" style="margin-top:18px">Pagar con Mercado Pago <span class="ar">→</span></button></div>`;
   $$("[name=pago]").forEach(r=>r.onchange=()=>{const mp=$("[name=pago]:checked").value==="mp";$("#ckTot").textContent=fmt(mp?t.li:t.ef);
     $("#ckSub").style.display=mp?"":"none";$("#ckGo").innerHTML=(mp?"Pagar con Mercado Pago":"Confirmar pedido por WhatsApp")+' <span class="ar">→</span>'});
   $("#ckGo").onclick=confirmar;$("#cPanel .pbody").scrollTop=0}
-async function confirmar(){const t=totales();const req=["nom","dni","tel","prov","cp","loc"];let ok=true;
+async function confirmar(){const t=totales();const VM=$("#ck_corr").value==="Villa María";const req=VM?["nom","dni","tel","loc"]:["nom","dni","tel","prov","cp","loc"];let ok=true;
   ["nom","dni","tel","mail","prov","cp","loc","corr"].forEach(k=>{const el=$("#ck_"+k);CK[k]=el.value.trim();if(el.tagName==="INPUT")el.classList.toggle("err",req.includes(k)&&!CK[k]);if(req.includes(k)&&!CK[k])ok=false});
   try{localStorage.setItem("ff_ck",JSON.stringify(CK))}catch(e){}
   if(!ok){toast("<span>Completá los datos marcados</span>");return}
   const mp=$("[name=pago]:checked").value==="mp";const total=mp?t.li:t.ef;
   let m=`¡Hola FF Perfumería! 👋\nQuiero confirmar esta compra:\n\n*Pedido*\n`;
   t.ids.forEach(k=>{const p=PRODUCTOS[k];m+=`• ${cart[k]} × ${p.nombre} (${p.marca}) — ${fmt((mp?lista(p):p.precio)*cart[k])}\n`});
-  m+=`\n*Total: ${fmt(total)}*\nPago: ${mp?`Mercado Pago — ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(total/TIENDA.cuotas))}`:"Transferencia al alias ffperfumeria"}\n\n*Envío gratis a sucursal ${CK.corr}*\n${CK.nom} · DNI ${CK.dni}\nTel: ${CK.tel}${CK.mail?"\nEmail: "+CK.mail:""}\n${CK.loc}, ${CK.prov} — CP ${CK.cp}`;
+  m+=`\n*Total: ${fmt(total)}*\nPago: ${mp?`Mercado Pago — ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(total/TIENDA.cuotas))}`:"Transferencia al alias ffperfumeria"}\n\n${VM?"*Entrega en Villa María — la coordinamos por acá*":`*Envío gratis a sucursal ${CK.corr}*`}\n${CK.nom} · DNI ${CK.dni}\nTel: ${CK.tel}${CK.mail?"\nEmail: "+CK.mail:""}\n${VM?CK.loc:`${CK.loc}, ${CK.prov} — CP ${CK.cp}`}`;
   if(!mp)m+=`\n\nTe envío el comprobante de la transferencia por acá.`;
   if(mp&&TIENDA.mpEndpoint){const b=$("#ckGo");b.textContent="Conectando con Mercado Pago…";b.disabled=true;
     try{const r=await fetch(TIENDA.mpEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
