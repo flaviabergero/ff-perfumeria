@@ -585,7 +585,8 @@ footer .legal{display:flex;justify-content:space-between;padding-top:28px;font-s
    CONFIGURACIÓN — editá acá
    ========================================================= */
 const TIENDA = {
-  whatsapp: "543535637956",
+  whatsapp: "5493535637956",   // 54 + 9 + 3535637956 (formato internacional de WhatsApp para celulares de Argentina)
+  whatsappVisible: "353 563-7956",
   instagram: "",
   descuentoEfectivo: 20,   // % de descuento en efectivo
   cuotas: 3,               // cuotas sin interés sobre el precio de lista
@@ -682,7 +683,7 @@ const offPct=p=>Math.round((1-p.precio/lista(p))*100);
 const cuota=p=>Math.round(lista(p)/TIENDA.cuotas);
 const WA='<svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2z"/></svg>';
 PRODUCTOS.forEach((p,i)=>p.id=i);
-const msgUno=p=>`Hola FF Perfumería! Quiero el perfume ${p.nombre} de ${p.marca}${p.ml?` (${p.ml})`:""}. ¿Tienen stock?`;
+const msgUno=p=>`¡Hola FF Perfumería! 👋\nMe interesa *${p.nombre}* de ${p.marca}${p.ml?` (${p.ml})`:""}.\n\n${p.precio?`Precio por transferencia: ${fmt(p.precio)}\nCon tarjeta: ${TIENDA.cuotas} cuotas sin interés de ${fmt(cuota(p))}\n\n`:""}¿Lo tienen disponible?`;
 
 function bottle(i){
   const sh=[`<rect x="26" y="46" width="48" height="70" rx="3"/>`,`<rect x="20" y="52" width="60" height="62" rx="28"/>`,`<path d="M30 46 H70 L78 116 H22 Z"/>`,`<rect x="30" y="44" width="40" height="74" rx="1"/>`][i%4];
@@ -850,20 +851,21 @@ async function confirmar(){const t=totales();const req=["nom","dni","tel","prov"
   try{localStorage.setItem("ff_ck",JSON.stringify(CK))}catch(e){}
   if(!ok){toast("<span>Completá los datos marcados</span>");return}
   const mp=$("[name=pago]:checked").value==="mp";const total=mp?t.li:t.ef;
-  let m=`Hola FF Perfumería! Quiero confirmar esta compra:\n\n`;
-  t.ids.forEach(k=>{const p=PRODUCTOS[k];m+=`• ${cart[k]} x ${p.nombre} - ${p.marca} - ${fmt((mp?lista(p):p.precio)*cart[k])}\n`});
-  m+=`\nTotal: ${fmt(total)}\nPago: ${mp?`Mercado Pago (${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(total/TIENDA.cuotas))})`:"Transferencia"}\n\nDatos de envío (sucursal ${CK.corr}):\n${CK.nom} — DNI ${CK.dni}\nTel: ${CK.tel}${CK.mail?"\nEmail: "+CK.mail:""}\n${CK.loc}, ${CK.prov} (CP ${CK.cp})`;
+  let m=`¡Hola FF Perfumería! 👋\nQuiero confirmar esta compra:\n\n*Pedido*\n`;
+  t.ids.forEach(k=>{const p=PRODUCTOS[k];m+=`• ${cart[k]} × ${p.nombre} (${p.marca}) — ${fmt((mp?lista(p):p.precio)*cart[k])}\n`});
+  m+=`\n*Total: ${fmt(total)}*\nPago: ${mp?`Mercado Pago — ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(total/TIENDA.cuotas))}`:"Transferencia al alias ffperfumeria"}\n\n*Envío gratis a sucursal ${CK.corr}*\n${CK.nom} · DNI ${CK.dni}\nTel: ${CK.tel}${CK.mail?"\nEmail: "+CK.mail:""}\n${CK.loc}, ${CK.prov} — CP ${CK.cp}`;
+  if(!mp)m+=`\n\nTe envío el comprobante de la transferencia por acá.`;
   if(mp&&TIENDA.mpEndpoint){const b=$("#ckGo");b.textContent="Conectando con Mercado Pago…";b.disabled=true;
     try{const r=await fetch(TIENDA.mpEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         items:t.ids.map(k=>({title:`${PRODUCTOS[k].marca} ${PRODUCTOS[k].nombre}`,quantity:cart[k],unit_price:lista(PRODUCTOS[k]),currency_id:"ARS"})),
         payer:{name:CK.nom,email:CK.mail,phone:CK.tel,dni:CK.dni},envio:{correo:CK.corr,provincia:CK.prov,localidad:CK.loc,cp:CK.cp},total,volver:location.href.split("#")[0]})});
       const d=await r.json();if(d.init_point){try{localStorage.setItem("ff_ultimo",m)}catch(e){}location.href=d.init_point;return}throw 0}
-    catch(e){b.disabled=false;b.innerHTML='Pagar con Mercado Pago <span class="ar">→</span>';m+="\n\n¿Me mandan el link de pago de Mercado Pago?";open(wa(m),"_blank","noopener");return}}
-  if(mp)m+=`\n\n¿Me mandan el link de pago de Mercado Pago?`;
+    catch(e){b.disabled=false;b.innerHTML='Pagar con Mercado Pago <span class="ar">→</span>';m+="\n\n¿Me pasan el link de pago de Mercado Pago?";open(wa(m),"_blank","noopener");return}}
+  if(mp)m+=`\n\n¿Me pasan el link de pago de Mercado Pago?`;
   open(wa(m),"_blank","noopener")}
-function msgPedido(ids,tot,tl,falt){let m="Hola FF Perfumería! Quiero hacer este pedido:\n\n";
-  ids.forEach(k=>{const p=PRODUCTOS[k];m+=`• ${cart[k]} x ${p.nombre} - ${p.marca}${p.ml?` (${p.ml})`:""}${p.precio?` - ${fmt(p.precio*cart[k])} transferencia`:""}\n`});
-  if(tot)m+=`\nTotal por transferencia${falt?" (parcial)":""}: ${fmt(tot)}\nO en ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(tl/TIENDA.cuotas))} (total ${fmt(tl)})`;return m+"\n\n¿Tienen stock?"}
+function msgPedido(ids,tot,tl,falt){let m="¡Hola FF Perfumería! 👋\nQuiero consultar por este pedido:\n\n*Pedido*\n";
+  ids.forEach(k=>{const p=PRODUCTOS[k];m+=`• ${cart[k]} × ${p.nombre} (${p.marca})${p.precio?` — ${fmt(p.precio*cart[k])}`:" — precio a consultar"}\n`});
+  if(tot)m+=`\n*Total por transferencia${falt?" (parcial)":""}: ${fmt(tot)}*\nCon tarjeta: ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(tl/TIENDA.cuotas))} (total ${fmt(tl)})`;return m+"\n\n¿Tienen stock?"}
 $("#items").addEventListener("click",e=>{const t=e.target;if(t.dataset.p){cart[t.dataset.p]++;save();updCart()}if(t.dataset.m){cart[t.dataset.m]--;if(cart[t.dataset.m]<=0)delete cart[t.dataset.m];save();updCart()}});
 
 /* ---------- panels ---------- */
@@ -892,14 +894,14 @@ let tt;function toast(h){const t=$("#toast");t.innerHTML=h;t.classList.add("on")
 /* ---------- form ---------- */
 $("#aChips").onclick=e=>{const b=e.target.closest("button");if(b)b.classList.toggle("on")};
 $("#askForm").addEventListener("submit",e=>{e.preventDefault();const nom=$("#aNom").value.trim(),perf=$("#aPerf").value.trim(),msg=$("#aMsg").value.trim();const gs=$$("#aChips .on").map(b=>b.textContent.toLowerCase());
-  let m=`Hola FF Perfumería!${nom?` Soy ${nom}.`:""} Quería asesoramiento.\n`;if(perf)m+=`\nBusco: ${perf}`;if(gs.length)m+=`\nMe gustan los aromas: ${gs.join(", ")}`;if(msg)m+=`\n${msg}`;
+  let m=`¡Hola FF Perfumería! 👋${nom?` Soy ${nom}.`:""}\nQuería pedirles asesoramiento.\n`;if(perf)m+=`\nBusco: ${perf}`;if(gs.length)m+=`\nMe gustan los aromas: ${gs.join(", ")}`;if(msg)m+=`\n${msg}`;
   const a=document.createElement("a");a.href=wa(m);a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();toast("<span>Se abrió WhatsApp con tu mensaje</span>")});
 
 /* ---------- header / reveal / cursor ---------- */
 function chrome(){
   let last=0;const h=$("#hdr");addEventListener("scroll",()=>{const y=scrollY;h.classList.toggle("solid",y>30);h.classList.toggle("hide",y>500&&y>last&&!$("#mmenu").classList.contains("on"));last=y},{passive:true});
-  const g=wa("Hola FF Perfumería! Quería hacer una consulta.");["#waTop","#waFloat"].forEach(s=>{const a=$(s);a.href=g;a.target="_blank";a.rel="noopener"});
-  $("#fContact").innerHTML=`<a href="${g}" target="_blank" rel="noopener">WhatsApp +${TIENDA.whatsapp}</a>${TIENDA.instagram?`<br><a href="https://instagram.com/${TIENDA.instagram}" target="_blank" rel="noopener">@${TIENDA.instagram}</a>`:""}`;
+  const g=wa("¡Hola FF Perfumería! 👋 Quería hacer una consulta.");["#waTop","#waFloat"].forEach(s=>{const a=$(s);a.href=g;a.target="_blank";a.rel="noopener"});
+  $("#fContact").innerHTML=`<a href="${g}" target="_blank" rel="noopener">WhatsApp ${TIENDA.whatsappVisible}</a>${TIENDA.instagram?`<br><a href="https://instagram.com/${TIENDA.instagram}" target="_blank" rel="noopener">@${TIENDA.instagram}</a>`:""}`;
   $("#yr").textContent=new Date().getFullYear();
   $("#burger").onclick=()=>$("#mmenu").classList.add("on");$("#mclose").onclick=()=>$("#mmenu").classList.remove("on");$$("#mmenu a").forEach(a=>a.onclick=()=>$("#mmenu").classList.remove("on"));
   const msgs=["Envío gratis a sucursal",`${TIENDA.descuentoEfectivo}% off por transferencia`,`${TIENDA.cuotas} cuotas sin interés`,"Perfumes originales"];let i=0;setInterval(()=>{i=(i+1)%msgs.length;const el=$("#heroInfo");el.style.opacity=0;setTimeout(()=>{el.textContent=msgs[i];el.style.opacity=1},400)},3000);$("#heroInfo").style.transition="opacity .4s";
@@ -917,7 +919,7 @@ function retornoMP(){const h=new URLSearchParams(location.hash.slice(1));const e
     pendiente:["Tu pago está pendiente","Apenas Mercado Pago lo acredite te avisamos. Cualquier duda, escribinos."],
     rechazado:["El pago no se completó","Podés intentar de nuevo o pagar por transferencia."]}[est]||["",""];
   if(est==="aprobado"){cart={};save();updCart()}
-  const msg=m?m.replace("Quiero confirmar esta compra:","Ya pagué con Mercado Pago"+(ref?" (ref. "+ref+")":"")+":"):"Hola FF Perfumería! Hice un pedido"+(ref?" (ref. "+ref+")":"");
+  const msg=m?m.replace("Quiero confirmar esta compra:","Ya pagué con Mercado Pago"+(ref?" (ref. "+ref+")":"")+". Este es mi pedido:"):"¡Hola FF Perfumería! 👋 Hice un pedido"+(ref?" (ref. "+ref+")":"");
   $("#items").innerHTML=`<div class="vacio"><h4>${T[0]}</h4><p>${T[1]}</p>${est!=="rechazado"?`<a class="btn" href="${wa(msg)}" target="_blank" rel="noopener">Avisar por WhatsApp <span class="ar">→</span></a>`:`<button class="btn" onclick="checkout()">Intentar de nuevo <span class="ar">→</span></button>`}</div>`;
   $("#cFoot").innerHTML="";closeAll(true);$("#cPanel").classList.add("on");$("#ov").classList.add("on");document.body.classList.add("lock")}
 /* Gilden: precio en pesos al dólar vendedor del BNA (igual que gildenprofumi.com) */
