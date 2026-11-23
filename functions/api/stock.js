@@ -1,6 +1,5 @@
-// GET /api/stock -> stock y precio por perfume, leídos en vivo de la planilla de Google de FF Perfumería.
+// Cloudflare Pages Function — GET /api/stock -> stock y precio por perfume, leídos en vivo de la planilla de Google de FF Perfumería.
 // La web lo usa al abrir para mostrar solo lo que hay en stock y con el precio de la planilla.
-export const config = { path: '/api/stock' };
 
 const CSV = 'https://docs.google.com/spreadsheets/d/1SO3Ih9wmzqpJNN2JlTTc0FZgqEiQpVCl3jDd7brTjBQ/export?format=csv&gid=1949742334';
 // Nombres que en la planilla están escritos distinto que en la web (planilla => web)
@@ -29,7 +28,7 @@ function parseCSV(t) {
 const limpio = (s) => String(s || '').trim().replace(/\s+/g, ' ');
 const numero = (s) => { const d = String(s || '').replace(/[^\d]/g, ''); return d ? Number(d) : null; };
 
-export default async () => {
+export async function onRequestGet() {
   if (cache && Date.now() - cache.t < 5 * 60 * 1000) return respuesta(cache.data);
   try {
     const r = await fetch(CSV, { redirect: 'follow', signal: AbortSignal.timeout(8000) });

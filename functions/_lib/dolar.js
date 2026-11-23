@@ -33,9 +33,9 @@ export async function cotizacion() {
   return cache;
 }
 // Precios de Gilden en pesos: USD 140 por transferencia, USD 160 con tarjeta/Mercado Pago (como en gildenprofumi.com).
-export async function preciosGilden() {
-  const usd = Number(process.env.GILDEN_USD || 140);
-  const usdTarjeta = Number(process.env.GILDEN_USD_TARJETA || 160);
+export async function preciosGilden(env = {}) {
+  const usd = Number(env.GILDEN_USD || 140);
+  const usdTarjeta = Number(env.GILDEN_USD_TARJETA || 160);
   const c = await cotizacion();
   if (!c) return null;
   const pesos = (u) => Math.ceil((u * c.venta) / 100) * 100;

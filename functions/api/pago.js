@@ -1,11 +1,11 @@
-import { preciosGilden, esGilden } from '../lib/dolar.mjs';
+import { preciosGilden, esGilden } from '../_lib/dolar.js';
 /**
  * FF Perfumería — conector de pago con Mercado Pago (Checkout Pro)
- * Netlify Function: https://ffperfumeria.netlify.app/api/pago
+ * Cloudflare Pages Function: /api/pago
  *
- * Necesita UNA variable de entorno en Netlify (Project configuration → Environment variables):
+ * Necesita UNA variable secreta en Cloudflare (Settings → Variables and Secrets):
  *   MP_ACCESS_TOKEN  → el Access Token de PRODUCCIÓN de tu aplicación de Mercado Pago
- *                      (empieza con "APP_USR-"). La cargás vos en Netlify; no va en la página.
+ *                      (empieza con "APP_USR-"). La cargás vos en Cloudflare; no va en la página.
  *
  * La página le manda el pedido, este Worker crea el pago en Mercado Pago y devuelve
  * el link (init_point) al que se redirige al cliente.
@@ -14,10 +14,7 @@ import { preciosGilden, esGilden } from '../lib/dolar.mjs';
 const CUOTAS_MAX = 3;            // cuotas que se muestran en el checkout
 const NOMBRE_TIENDA = "FF PERFUMERIA"; // aparece en el resumen de la tarjeta (máx. 13 caracteres útiles)
 
-export const config = { path: "/api/pago" };
-
-export default async (request) => {
-  const env = { MP_ACCESS_TOKEN: Netlify.env.get("MP_ACCESS_TOKEN") };
+export async function onRequest({ request, env }) {
   {
     const cors = {
       "Access-Control-Allow-Origin": "*",
@@ -39,7 +36,7 @@ export default async (request) => {
     })).filter((it) => it.unit_price > 0);
     // Gilden: el precio sale del dólar BNA (USD 160 con Mercado Pago), nunca del navegador.
     if (items.some((it) => esGilden(it.title))) {
-      const g = await preciosGilden();
+      const g = await preciosGilden(env);
       if (!g) return json({ error: "Sin cotización del dólar" }, 503, cors);
       items.forEach((it) => { if (esGilden(it.title)) it.unit_price = g.tarjeta; });
     }
@@ -83,7 +80,7 @@ export default async (request) => {
     if (!r.ok || !d.init_point) return json({ error: "Mercado Pago rechazó el pedido", detalle: d.message }, 502, cors);
     return json({ init_point: d.init_point, ref }, 200, cors);
   }
-};
+}
 
 function json(obj, status, headers) {
   return new Response(JSON.stringify(obj), { status, headers: { ...headers, "Content-Type": "application/json" } });
