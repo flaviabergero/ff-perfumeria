@@ -898,7 +898,7 @@ function checkout(){const t=totales();if(!t.ids.length)return;const v=k=>(CK[k]|
     <h5>Medio de pago</h5>
     <div class="pay">
       <label><input type="radio" name="pago" value="mp" checked><span><b>Mercado Pago <span class="mpb">MP</span></b><small>Tarjeta de crédito en ${TIENDA.cuotas} cuotas sin interés, débito o dinero en cuenta</small></span><span class="amt">${fmt(t.li)}</span></label>
-      <label><input type="radio" name="pago" value="tr"><span><b>Transferencia</b><small>${Math.round((1-t.ef/t.li)*100)}% off — alias ffperfumeria</small></span><span class="amt">${fmt(t.ef)}</span></label>
+      <label><input type="radio" name="pago" value="tr"><span><b>Transferencia</b><small>${Math.round((1-t.ef/t.li)*100)}% off — dinero en cuenta de Mercado Pago, transferencia o efectivo (sin tarjeta)</small></span><span class="amt">${fmt(t.ef)}</span></label>
     </div></div>`;
   if(CK.corr)$("#ck_corr").value=CK.corr;
   const esVM=()=>/villa\s*mar[ií]a/i.test($("#ck_loc").value);
@@ -909,7 +909,7 @@ function checkout(){const t=totales();if(!t.ids.length)return;const v=k=>(CK[k]|
   $("#cFoot").innerHTML=`<div class="cfoot"><div class="trow"><span>Total a pagar</span><b id="ckTot">${fmt(t.li)}</b></div><div class="trow s" id="ckSub"><span>${TIENDA.cuotas} cuotas sin interés de</span><span>${fmt(Math.round(t.li/TIENDA.cuotas))}</span></div>
     <button class="btn block" id="ckGo" style="margin-top:18px">Pagar con Mercado Pago <span class="ar">→</span></button></div>`;
   $$("[name=pago]").forEach(r=>r.onchange=()=>{const mp=$("[name=pago]:checked").value==="mp";$("#ckTot").textContent=fmt(mp?t.li:t.ef);
-    $("#ckSub").style.display=mp?"":"none";$("#ckGo").innerHTML=(mp?"Pagar con Mercado Pago":"Confirmar pedido por WhatsApp")+' <span class="ar">→</span>'});
+    $("#ckSub").style.display=mp?"":"none";$("#ckGo").innerHTML=(mp?"Pagar con Mercado Pago":"Pagar por transferencia en Mercado Pago")+' <span class="ar">→</span>'});
   $("#ckGo").onclick=confirmar;$("#cPanel .pbody").scrollTop=0}
 async function confirmar(){const t=totales();const VM=$("#ck_corr").value==="Villa María";const req=VM?["nom","dni","tel","loc"]:["nom","dni","tel","prov","cp","loc"];let ok=true;
   ["nom","dni","tel","mail","prov","cp","loc","corr"].forEach(k=>{const el=$("#ck_"+k);CK[k]=el.value.trim();if(el.tagName==="INPUT")el.classList.toggle("err",req.includes(k)&&!CK[k]);if(req.includes(k)&&!CK[k])ok=false});
@@ -918,14 +918,13 @@ async function confirmar(){const t=totales();const VM=$("#ck_corr").value==="Vil
   const mp=$("[name=pago]:checked").value==="mp";const total=mp?t.li:t.ef;
   let m=`¡Hola FF Perfumería!\nQuiero confirmar esta compra:\n\n*Pedido*\n`;
   t.ids.forEach(k=>{const p=PRODUCTOS[k];m+=`• ${cart[k]} × ${p.nombre} (${p.marca}) — ${fmt((mp?lista(p):p.precio)*cart[k])}\n`});
-  m+=`\n*Total: ${fmt(total)}*\nPago: ${mp?`Mercado Pago — ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(total/TIENDA.cuotas))}`:"Transferencia al alias ffperfumeria"}\n\n${VM?"*Entrega en Villa María — la coordinamos por acá*":`*Envío gratis a sucursal ${CK.corr}*`}\n${CK.nom} · DNI ${CK.dni}\nTel: ${CK.tel}${CK.mail?"\nEmail: "+CK.mail:""}\n${VM?CK.loc:`${CK.loc}, ${CK.prov} — CP ${CK.cp}`}`;
-  if(!mp)m+=`\n\nTe envío el comprobante de la transferencia por acá.`;
-  if(mp&&TIENDA.mpEndpoint){const b=$("#ckGo");b.textContent="Conectando con Mercado Pago…";b.disabled=true;
+  m+=`\n*Total: ${fmt(total)}*\nPago: ${mp?`Mercado Pago — ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(total/TIENDA.cuotas))}`:"Transferencia por Mercado Pago"}\n\n${VM?"*Entrega en Villa María — la coordinamos por acá*":`*Envío gratis a sucursal ${CK.corr}*`}\n${CK.nom} · DNI ${CK.dni}\nTel: ${CK.tel}${CK.mail?"\nEmail: "+CK.mail:""}\n${VM?CK.loc:`${CK.loc}, ${CK.prov} — CP ${CK.cp}`}`;
+  if(TIENDA.mpEndpoint){const b=$("#ckGo");b.textContent="Conectando con Mercado Pago…";b.disabled=true;
     try{const r=await fetch(TIENDA.mpEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-        items:t.ids.map(k=>({title:`${PRODUCTOS[k].marca} ${PRODUCTOS[k].nombre}`,quantity:cart[k],unit_price:lista(PRODUCTOS[k]),currency_id:"ARS"})),
+        modo:mp?"tarjeta":"transferencia",items:t.ids.map(k=>({title:`${PRODUCTOS[k].marca} ${PRODUCTOS[k].nombre}`,quantity:cart[k],unit_price:mp?lista(PRODUCTOS[k]):PRODUCTOS[k].precio,currency_id:"ARS"})),
         payer:{name:CK.nom,email:CK.mail,phone:CK.tel,dni:CK.dni},envio:{correo:CK.corr,provincia:CK.prov,localidad:CK.loc,cp:CK.cp},total,volver:location.href.split("#")[0]})});
       const d=await r.json();if(d.init_point){try{localStorage.setItem("ff_ultimo",m)}catch(e){}location.href=d.init_point;return}throw 0}
-    catch(e){b.disabled=false;b.innerHTML='Pagar con Mercado Pago <span class="ar">→</span>';m+="\n\n¿Me pasan el link de pago de Mercado Pago?";open(wa(m),"_blank","noopener");return}}
+    catch(e){b.disabled=false;b.innerHTML=(mp?'Pagar con Mercado Pago':'Pagar por transferencia en Mercado Pago')+' <span class="ar">→</span>';m+=mp?"\n\n¿Me pasan el link de pago de Mercado Pago?":"\n\n¿Me pasan los datos para transferir?";open(wa(m),"_blank","noopener");return}}
   if(mp)m+=`\n\n¿Me pasan el link de pago de Mercado Pago?`;
   open(wa(m),"_blank","noopener")}
 function msgPedido(ids,tot,tl,falt){let m="¡Hola FF Perfumería!\nQuiero consultar por este pedido:\n\n*Pedido*\n";

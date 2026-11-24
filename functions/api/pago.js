@@ -28,6 +28,7 @@ export async function onRequest({ request, env }) {
     let pedido;
     try { pedido = await request.json(); } catch { return json({ error: "Pedido inválido" }, 400, cors); }
 
+    const transferencia = pedido.modo === "transferencia";
     const items = (pedido.items || []).slice(0, 30).map((it) => ({
       title: String(it.title || "Perfume").slice(0, 120),
       quantity: Math.max(1, Math.min(10, parseInt(it.quantity, 10) || 1)),
@@ -38,7 +39,7 @@ export async function onRequest({ request, env }) {
     if (items.some((it) => esGilden(it.title))) {
       const g = await preciosGilden(env);
       if (!g) return json({ error: "Sin cotización del dólar" }, 503, cors);
-      items.forEach((it) => { if (esGilden(it.title)) it.unit_price = g.tarjeta; });
+      items.forEach((it) => { if (esGilden(it.title)) it.unit_price = transferencia ? g.transferencia : g.tarjeta; });
     }
     if (!items.length) return json({ error: "Pedido vacío" }, 400, cors);
 
@@ -54,9 +55,12 @@ export async function onRequest({ request, env }) {
         email: /.+@.+\..+/.test(p.email || "") ? p.email : undefined,
         identification: p.dni ? { type: "DNI", number: String(p.dni).replace(/\D/g, "") } : undefined,
       },
-      payment_methods: { installments: CUOTAS_MAX },
+      // Transferencia: precio con descuento, sin tarjetas (dinero en cuenta, transferencia o efectivo).
+      payment_methods: transferencia
+        ? { installments: 1, excluded_payment_types: [{ id: "credit_card" }, { id: "debit_card" }, { id: "prepaid_card" }] }
+        : { installments: CUOTAS_MAX },
       statement_descriptor: NOMBRE_TIENDA,
-      external_reference: ref,
+      external_reference: ref + (transferencia ? "-TR" : ""),
       metadata: {
         cliente: p.name, telefono: p.phone, dni: p.dni, email: p.email,
         correo: e.correo, provincia: e.provincia, localidad: e.localidad, cp: e.cp,
