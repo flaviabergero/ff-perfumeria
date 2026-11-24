@@ -242,6 +242,7 @@ select.sort{border:none;background:none;font-family:inherit;font-size:12px;lette
 .tgrid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line)}
 .tcard{padding:34px 32px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:22px}
 .tcard:last-child{border-right:0}
+.tcta .btn{align-self:flex-start}.tgrid.solo{grid-template-columns:1fr;max-width:620px}
 .tcard .st{letter-spacing:.25em;font-size:13px}
 .tcard blockquote{margin:0;font-size:16px;line-height:1.65;flex:1}
 .tcard .who{display:flex;gap:14px;align-items:center}
@@ -556,7 +557,7 @@ footer .legal{display:flex;justify-content:space-between;padding-top:28px;font-s
 
 <section class="testis" id="testimonios" hidden>
   <div class="wrap">
-    <div class="thead rv"><h2>No lo decimos<br><em>nosotros.</em></h2><p>Lo dicen quienes ya compraron, probaron y encontraron su nueva fragancia favorita.</p></div>
+    <div class="thead rv"><h2>No lo decimos<br><em>nosotros.</em></h2><p>Lo cuentan quienes ya compraron, probaron y encontraron su nueva fragancia favorita.</p></div>
     <div class="tgrid" id="tgrid"></div>
   </div>
 </section>
@@ -767,8 +768,10 @@ const NOTAS = {
 const TESTIMONIOS = [
   // { texto:"...", nombre:"Nombre A.", ciudad:"Ciudad", estrellas:5 },
 ];
-function testimonios(){if(!TESTIMONIOS.length)return;$("#testimonios").hidden=false;
-  $("#tgrid").innerHTML=TESTIMONIOS.map(t=>`<div class="tcard"><div class="st">${"★".repeat(t.estrellas||5)}</div><blockquote>${t.texto}</blockquote><div class="who"><span class="av">${t.nombre.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase()}</span><span><b>${t.nombre}</b><small>${t.ciudad||""}</small></span></div></div>`).join("");
+function testimonios(){$("#testimonios").hidden=false;
+  const cards=TESTIMONIOS.map(t=>`<div class="tcard"><div class="st">${"★".repeat(t.estrellas||5)}</div><blockquote>${t.texto}</blockquote><div class="who"><span class="av">${t.nombre.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase()}</span><span><b>${t.nombre}</b><small>${t.ciudad||""}</small></span></div></div>`);
+  cards.push(`<div class="tcard tcta"><div class="st">★★★★★</div><blockquote>¿Ya compraste en FF Perfumería? Contanos cómo te llegó tu perfume y qué te pareció. Tu opinión ayuda a otros a elegir.</blockquote><a class="btn" href="${wa("Hola FF Perfumería! Quiero dejar mi opinión sobre mi compra: ")}" target="_blank" rel="noopener">Dejar mi opinión <span class="ar">→</span></a></div>`);
+  $("#tgrid").innerHTML=cards.join("");$("#tgrid").classList.toggle("solo",cards.length===1);
   const a=document.createElement("a");a.href="#testimonios";a.textContent="Testimonios";document.querySelector(".nav .links").appendChild(a)}
 /* HISTORIAS: texto que aparece en la ficha del perfume (por nombre exacto). */
 const HISTORIAS = {
