@@ -57,7 +57,7 @@ export async function onRequest({ request, env }) {
       },
       // Transferencia: precio con descuento, sin tarjetas (dinero en cuenta, transferencia o efectivo).
       payment_methods: transferencia
-        ? { installments: 1, excluded_payment_types: [{ id: "credit_card" }, { id: "debit_card" }, { id: "prepaid_card" }] }
+        ? { installments: 1, excluded_payment_types: [{ id: "credit_card" }, { id: "debit_card" }, { id: "prepaid_card" }], excluded_payment_methods: [{ id: "consumer_credits" }] }
         : { installments: CUOTAS_MAX },
       statement_descriptor: NOMBRE_TIENDA,
       external_reference: ref + (transferencia ? "-TR" : ""),
