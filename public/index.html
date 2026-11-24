@@ -307,7 +307,7 @@ footer .legal{display:flex;justify-content:space-between;padding-top:28px;font-s
 .pinfo{padding:34px}
 .pinfo h2{font-size:38px;font-weight:300;line-height:1.08;margin:8px 0 6px;letter-spacing:-.01em}
 .pinfo .meta{font-size:13px;color:var(--muted);letter-spacing:.04em}
-.pinfo .prices.pl{margin-top:26px}.prices.pl{margin-bottom:1px}.prices.po{margin-top:8px}
+.pinfo .prices{margin-top:26px}
 .pinfo .prices .p{font-size:28px}
 .qtyrow{display:flex;gap:12px;margin:28px 0 12px}
 .qty{display:flex;align-items:center;border:1px solid var(--line)}
@@ -781,10 +781,9 @@ const vis=p=>p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:`<d
 
 function priceHTML(p){
   if(!p.precio) return `<div class="consult">Consultar precio</div>`;
-  return `<div class="prices pl"><span class="l">${fmt(lista(p))}</span></div>
-  <div class="prices pm"><span class="p">${fmt(p.precio)}</span><span class="ef">transferencia</span></div>
-  <div class="cuo">${TIENDA.cuotas} cuotas sin interés de <b>${fmt(cuota(p))}</b></div>
-  <div class="prices po"><span class="off">−${offPct(p)}% off por transferencia</span></div>`;
+  return `<div class="prices"><span class="p">${fmt(p.precio)}</span><span class="ef">transferencia</span>${p.precioNormal?`<span class="l">${fmt(p.precioNormal)}</span>`:""}</div>
+  <div class="prices" style="margin-top:2px"><span class="l">${fmt(lista(p))}</span><span class="off">−${offPct(p)}%</span></div>
+  <div class="cuo">${TIENDA.cuotas} cuotas sin interés de <b>${fmt(cuota(p))}</b></div>`;
 }
 function card(p){
   return `<article class="card" data-id="${p.id}">
