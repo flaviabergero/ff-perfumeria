@@ -344,6 +344,25 @@ footer .legal{display:flex;justify-content:space-between;padding-top:28px;font-s
 .pay .amt{margin-left:auto;font-weight:600;white-space:nowrap;font-size:14px}.mpb{display:inline-block;background:#009ee3;color:#fff;font-size:10px;letter-spacing:.08em;padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:2px}
 .ckback{background:none;border:0;font:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:0;margin-bottom:6px}
 .cfoot .note{font-size:13px;color:var(--muted);margin:10px 0 20px}
+.srchbtn{background:none;border:0;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;cursor:pointer;display:flex;align-items:center;gap:9px;padding:4px 0}
+.srchbtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6}
+.sbox{position:fixed;inset:0;z-index:90;background:rgba(20,18,16,.45);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:.35s}
+.sbox.on{opacity:1;visibility:visible}
+.sbox-in{background:var(--paper);max-width:760px;margin:0 auto;transform:translateY(-20px);transition:transform .45s var(--ease);max-height:86vh;display:flex;flex-direction:column}
+.sbox.on .sbox-in{transform:none}
+.sbox-top{display:flex;align-items:center;gap:14px;padding:22px 26px;border-bottom:1px solid var(--line)}
+.sbox-top svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;flex:none}
+.sbox-top input{flex:1;border:0;background:transparent;font:inherit;font-size:19px;color:inherit;outline:none;min-width:0}
+.sbox-x{background:none;border:0;font-size:28px;line-height:1;cursor:pointer;color:var(--muted)}
+.sres{overflow:auto;padding:8px 0}
+.sres a[data-id]{display:grid;grid-template-columns:56px 1fr auto;gap:16px;align-items:center;padding:10px 26px;cursor:pointer}
+.sres a[data-id]:hover,.sres a.act{background:rgba(0,0,0,.04)}
+.sres img{width:56px;height:56px;object-fit:cover;background:#222}
+.sres .t{font-size:15px}.sres .t small{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.sres .t em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:3px}
+.sres .pr{font-size:14px;font-weight:500;white-space:nowrap}
+.sres .nada{padding:26px;color:var(--muted);font-size:14px}
+@media(max-width:820px){.sbox-in{max-height:100vh;height:100%}.sbox-top input{font-size:16px}.sres a[data-id]{padding:10px 18px}}
 .vacio{padding:80px 34px;text-align:center}
 .vacio h4{font-weight:300;font-size:30px;margin-bottom:10px}
 .vacio p{color:var(--muted);margin-bottom:30px}
@@ -439,6 +458,7 @@ footer .legal{display:flex;justify-content:space-between;padding-top:28px;font-s
     <nav class="links"><a href="#coleccion">Colección</a><div class="dd" id="dd"><button class="ddbtn" aria-expanded="false">Categorías <span class="car">▾</span></button><div class="ddmenu" id="ddmenu"></div></div><a href="#asesoramiento">Asesoramiento</a></nav>
     <a href="#top" class="logo" aria-label="FF Perfumería"><img src="logo-h-dark.png" alt="FF Perfumería"></a>
     <div class="right">
+      <button class="srchbtn" id="srchBtn" aria-label="Buscar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="hide-m">Buscar</span></button>
       <a href="#" class="hide-m" id="waTop">WhatsApp</a>
       <button class="cartlink" id="cartBtn" aria-label="Mi pedido"><span class="hide-m">Pedido</span><span class="n" id="cartN">0</span></button>
       <button class="burger" id="burger" aria-label="Menú"><i></i><i></i></button>
@@ -455,11 +475,11 @@ footer .legal{display:flex;justify-content:space-between;padding-top:28px;font-s
 <section class="hero">
   <div class="wrap grid">
     <div>
-      <div class="eyebrow">FF Perfumería — Colección 2026</div>
+      <div class="eyebrow">FF Perfumería</div>
       <h1><span class="line"><span>Fragancias</span></span><span class="line"><span>que dejan</span></span><span class="line"><span><em>huella.</em></span></span></h1>
       <p class="lead">Perfumes originales árabes, de diseñador y de nicho. En frasco completo, con envío gratis a sucursal a todo el país.</p>
       <div class="ctas">
-        <a href="#coleccion" class="btn" data-mag>Explorar colección <span class="ar">→</span></a>
+        <a href="#coleccion" class="btn" data-mag>Ver perfumes <span class="ar">→</span></a>
         <a href="#asesoramiento" class="ulink">Asesoramiento</a>
       </div>
     </div>
@@ -580,6 +600,14 @@ footer .legal{display:flex;justify-content:space-between;padding-top:28px;font-s
 <div class="ov" id="ov"></div>
 <aside class="panel" id="pPanel" aria-label="Detalle"><div class="ph-top"><span class="eyebrow" id="pCat"></span><button class="x" data-close aria-label="Cerrar">×</button></div><div class="pbody" id="pBody"></div></aside>
 <aside class="panel" id="cPanel" aria-label="Mi pedido"><div class="ph-top"><h3>Mi <em>pedido</em></h3><button class="x" data-close aria-label="Cerrar">×</button></div><div class="pbody"><div class="items" id="items"></div></div><div id="cFoot"></div></aside>
+<div class="sbox" id="sbox" role="dialog" aria-label="Buscador">
+  <div class="sbox-in">
+    <div class="sbox-top"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="sq" type="text" enterkeyhint="search" placeholder="Buscá por perfume, marca o nota (ej: vainilla)" autocomplete="off">
+      <button class="sbox-x" id="sx" aria-label="Cerrar">×</button></div>
+    <div class="sres" id="sres"></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -944,6 +972,24 @@ function openP(id){const p=PRODUCTOS[id];let n=1;$("#pCat").textContent=p.cat;
   $("#qm").onclick=()=>{n=Math.max(1,n-1);$("#qn").textContent=n};$("#qp").onclick=()=>{n++;$("#qn").textContent=n};$("#qadd").onclick=()=>{add(id,n);closeAll()};
   $("#pBody").scrollTop=0;$("#pPanel").classList.add("on");$("#ov").classList.add("on");document.body.classList.add("lock")}
 function openCart(){updCart();closeAll(true);$("#cPanel").classList.add("on");$("#ov").classList.add("on");document.body.classList.add("lock")}
+/* ---------- buscador ---------- */
+const sinTilde=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+function buscar(q){const w=sinTilde(q).trim().split(/\s+/).filter(Boolean);
+  if(!w.length)return PRODUCTOS.filter(p=>p.top).slice(0,6);
+  return PRODUCTOS.map(p=>{const txt=sinTilde(p.nombre+" "+p.marca+" "+p.cat+" "+(NOTAS[p.nombre]||[]).join(" "));
+    if(!w.every(x=>txt.includes(x)))return null;const n=sinTilde(p.nombre);return {p,s:(n.startsWith(w[0])?0:n.includes(w[0])?1:2)}}).filter(Boolean).sort((a,b)=>a.s-b.s).map(x=>x.p).slice(0,12)}
+function pintarBusqueda(){const q=$("#sq").value, q0=sinTilde(q.trim().split(/\s+/)[0]||"");const r=buscar(q);
+  $("#sres").innerHTML=r.length?(!q.trim()?'<div class="nada" style="padding:10px 26px 4px">Más vendidos</div>':"")+r.map((p,i)=>{const nt=NOTAS[p.nombre];
+    const hit=q0&&nt&&sinTilde(nt.join(" ")).includes(q0)&&!sinTilde(p.nombre+" "+p.marca).includes(q0);
+    return `<a data-id="${p.id}" class="${i===0&&q.trim()?"act":""}"><img src="${p.foto}" alt="" loading="lazy"><span class="t"><small>${p.marca}</small>${p.nombre}${hit?`<em>Notas: ${nt.join(" · ")}</em>`:""}</span><span class="pr">${p.precio?fmt(p.precio):""}</span></a>`}).join("")
+    :`<div class="nada">No encontramos "${q.replace(/[<>"]/g,"")}". <a style="text-decoration:underline" href="${wa("Hola FF Perfumería! Estoy buscando "+q+". ¿Lo pueden conseguir?")}" target="_blank" rel="noopener">Consultanos por WhatsApp</a> y te lo buscamos.</div>`;
+  $$("#sres a[data-id]").forEach(a=>a.onclick=()=>{cerrarBusqueda();openP(+a.dataset.id)})}
+function abrirBusqueda(){closeAll();$("#sbox").classList.add("on");document.body.classList.add("lock");pintarBusqueda();setTimeout(()=>$("#sq").focus(),60)}
+function cerrarBusqueda(){$("#sbox").classList.remove("on");document.body.classList.remove("lock")}
+$("#srchBtn").onclick=abrirBusqueda;$("#sx").onclick=cerrarBusqueda;
+$("#sbox").addEventListener("click",e=>{if(e.target.id==="sbox")cerrarBusqueda()});
+$("#sq").addEventListener("input",pintarBusqueda);
+$("#sq").addEventListener("keydown",e=>{if(e.key==="Escape")cerrarBusqueda();if(e.key==="Enter"){const a=$("#sres a.act")||$("#sres a[data-id]");if(a)a.click()}});
 function closeAll(keep){$$(".panel").forEach(p=>p.classList.remove("on"));if(!keep){$("#ov").classList.remove("on");document.body.classList.remove("lock")}$("#mmenu").classList.remove("on")}
 $("#ov").onclick=()=>closeAll();$$("[data-close]").forEach(b=>b.onclick=()=>closeAll());$("#cartBtn").onclick=openCart;
 addEventListener("keydown",e=>{if(e.key==="Escape")closeAll()});
