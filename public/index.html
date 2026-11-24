@@ -773,7 +773,7 @@ const TESTIMONIOS = [
   { texto:"Hace un rato busqué el paquete que me enviaste. ¡Sin palabras! Tremendos todos los perfumes. ¡Increíbles! Gracias.", nombre:"Sergio F.", ciudad:"vía Instagram", estrellas:5 },
   { texto:"Ahí retiré el perfume del correo. Todo 10 puntos. Muchas gracias por el servicio, ¡una masa!", nombre:"Tomy O.", ciudad:"vía Instagram", estrellas:5 },
   { texto:"Ya llegó todo en orden. ¡10 puntos! Ya probaremos otros.", nombre:"Valentín C.", ciudad:"vía Instagram", estrellas:5 },
-  { texto:"Llegó todo muy bien, muchas gracias.", nombre:"Cliente FF", ciudad:"vía WhatsApp", estrellas:5 },
+  { texto:"Llegó todo muy bien, muchas gracias.", nombre:"Fla. B.", ciudad:"vía WhatsApp", estrellas:5 },
 ];
 function testimonios(){$("#testimonios").hidden=false;
   const cards=TESTIMONIOS.map(t=>`<div class="tcard"><div class="st">${"★".repeat(t.estrellas||5)}</div><blockquote>${t.texto}</blockquote><div class="who"><span class="av">${t.nombre.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase()}</span><span><b>${t.nombre}</b><small>${t.ciudad||""}</small></span></div></div>`);
