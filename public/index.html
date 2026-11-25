@@ -95,8 +95,8 @@ header.hide{transform:translateY(-100%)}
 .ulink:hover::after{transform:scaleX(.3)}
 
 .gallery{position:relative;height:min(72vh,660px)}
-.frame{position:absolute;overflow:hidden;background:#171513;clip-path:inset(100% 0 0 0);transition:clip-path 1.6s var(--ease2)}
-.ready .frame{clip-path:inset(0 0 0 0)}
+.frame{position:absolute;overflow:hidden;border-radius:10px;background:#171513;clip-path:inset(100% 0 0 0 round 10px);transition:clip-path 1.6s var(--ease2)}
+.ready .frame{clip-path:inset(0 0 0 0 round 10px)}
 .frame img{width:100%;height:100%;object-fit:cover;transform:scale(1.15);transition:transform 2.2s var(--ease),opacity 1s}
 .ready .frame img{transform:scale(1)}
 .frame.f1{right:0;top:0;width:66%;height:86%;transition-delay:.15s}
