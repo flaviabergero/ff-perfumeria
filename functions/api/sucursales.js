@@ -50,7 +50,7 @@ function parsear(html) {
     });
   }
   const vistos = new Set();
-  return out.filter(s => { const k = s.nombre + s.direccion; if (vistos.has(k)) return false; vistos.add(k); return true; });
+  return out.filter(s => { const k = (s.direccion + s.localidad).toLowerCase().replace(/[^a-z0-9]/g, ""); if (vistos.has(k)) return false; vistos.add(k); return true; });
 }
 
 export async function onRequest({ request }) {
