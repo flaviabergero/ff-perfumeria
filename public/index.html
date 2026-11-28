@@ -352,7 +352,7 @@ footer .legal{display:flex;justify-content:space-between;padding-top:28px;font-s
 .trow.s{font-size:14px;color:var(--muted)}
 .ck{padding:6px 0 0}.ck h5{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:22px 0 12px;font-weight:500}
 .ck .f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ck input,.ck select{width:100%;padding:13px 14px;border:1px solid var(--line);background:transparent;font:inherit;font-size:14px;color:inherit;border-radius:0;margin-bottom:10px}
-.ck input:focus,.ck select:focus{outline:none;border-color:currentColor}.ck input.err{border-color:#b3261e}
+.ck input:focus,.ck select:focus{outline:none;border-color:currentColor}.ck .err{border-color:#b3261e}.ck select:disabled{opacity:.55}
 .pay{display:grid;gap:10px}.pay label{display:flex;gap:14px;align-items:flex-start;padding:16px;border:1px solid var(--line);cursor:pointer;transition:border-color .25s}
 .pay label:has(input:checked){border-color:currentColor}.pay input{margin-top:3px;accent-color:#111;width:auto}.pay b{display:block;font-size:14px;font-weight:600}.pay small{font-size:12.5px;color:var(--muted)}
 .pay .amt{margin-left:auto;font-weight:600;white-space:nowrap;font-size:14px}.mpb{display:inline-block;background:#009ee3;color:#fff;font-size:10px;letter-spacing:.08em;padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:2px}
@@ -946,6 +946,7 @@ function updCart(){
             <a class="walink" style="margin-top:10px;border:0;padding:10px" href="${wa(msgPedido(ids,tot,tl,falt))}" target="_blank" rel="noopener">o consultar por WhatsApp</a>`}</div>`;
 }
 /* ---------- checkout ---------- */
+const PROVS=[["B","Buenos Aires"],["C","Ciudad Autónoma de Buenos Aires"],["K","Catamarca"],["H","Chaco"],["U","Chubut"],["X","Córdoba"],["W","Corrientes"],["E","Entre Ríos"],["P","Formosa"],["Y","Jujuy"],["L","La Pampa"],["F","La Rioja"],["M","Mendoza"],["N","Misiones"],["Q","Neuquén"],["R","Río Negro"],["A","Salta"],["J","San Juan"],["D","San Luis"],["Z","Santa Cruz"],["S","Santa Fe"],["G","Santiago del Estero"],["V","Tierra del Fuego"],["T","Tucumán"]];
 let CK={};try{CK=JSON.parse(localStorage.getItem("ff_ck")||"{}")}catch(e){}
 function totales(){const ids=Object.keys(cart).filter(k=>cart[k]>0&&PRODUCTOS[k]);
   return {ids,ef:ids.reduce((a,k)=>a+PRODUCTOS[k].precio*cart[k],0),li:ids.reduce((a,k)=>a+lista(PRODUCTOS[k])*cart[k],0)}}
@@ -956,38 +957,60 @@ function checkout(){const t=totales();if(!t.ids.length)return;const v=k=>(CK[k]|
     <div class="f2"><input id="ck_dni" placeholder="DNI" inputmode="numeric" value="${v("dni")}"><input id="ck_tel" placeholder="Teléfono" inputmode="tel" value="${v("tel")}" autocomplete="tel"></div>
     <input id="ck_mail" placeholder="Email" type="email" value="${v("mail")}" autocomplete="email">
     <h5 id="ckEnvH">Envío gratis a sucursal</h5>
-    <div class="f2"><input id="ck_prov" placeholder="Provincia" value="${v("prov")}"><input id="ck_cp" placeholder="Código postal" inputmode="numeric" value="${v("cp")}"></div>
-    <input id="ck_loc" placeholder="Localidad" value="${v("loc")}">
-    <select id="ck_corr"><option value="Correo Argentino">Correo Argentino — sucursal</option><option value="Villa María">Soy de Villa María — coordino la entrega con la vendedora</option></select>
+    <select id="ck_corr"><option value="Correo Argentino">Correo Argentino — retiro en sucursal</option><option value="Villa María">Soy de Villa María — coordino la entrega con la vendedora</option></select>
+    <div id="envCA">
+      <div class="f2"><select id="ck_prov"><option value="">Provincia</option>${PROVS.map(([c,n])=>`<option value="${n}" data-c="${c}">${n}</option>`).join("")}</select><select id="ck_locs" disabled><option value="">Localidad</option></select></div>
+      <input id="ck_loc" placeholder="Localidad" value="${v("loc")}" style="display:none">
+      <select id="ck_suc" disabled><option value="">Elegí la sucursal de Correo</option></select>
+      <input id="ck_sucTxt" placeholder="Sucursal de Correo Argentino (dirección)" value="${v("suc")}" style="display:none">
+      <p class="note" id="sucNote" style="margin:-2px 0 6px;font-size:12.5px;line-height:1.5;opacity:.75">Elegí la sucursal donde vas a retirar tu perfume. <a href="https://www.correoargentino.com.ar/formularios/sucursales" target="_blank" rel="noopener" style="text-decoration:underline">Ver sucursales en el mapa del Correo ↗</a></p>
+    </div>
     <p class="note" id="vmNote" style="display:none;margin:-2px 0 6px;font-size:13px;line-height:1.5">📍 Como sos de <b>Villa María</b>, la entrega la coordinás directamente con la vendedora por WhatsApp después de pagar. No hace falta envío.</p>
     <h5>Medio de pago</h5>
     <div class="pay">
       <label><input type="radio" name="pago" value="mp" checked><span><b>Mercado Pago <span class="mpb">MP</span></b><small>Tarjeta de crédito en ${TIENDA.cuotas} cuotas sin interés, débito o dinero en cuenta</small></span><span class="amt">${fmt(t.li)}</span></label>
       <label><input type="radio" name="pago" value="tr"><span><b>Transferencia</b><small>${Math.round((1-t.ef/t.li)*100)}% off — dinero en cuenta de Mercado Pago, transferencia o efectivo (sin tarjeta)</small></span><span class="amt">${fmt(t.ef)}</span></label>
     </div></div>`;
-  if(CK.corr)$("#ck_corr").value=CK.corr;
-  const esVM=()=>/villa\s*mar[ií]a/i.test($("#ck_loc").value);
-  const vm=()=>{const on=$("#ck_corr").value==="Villa María";$("#vmNote").style.display=on?"":"none";$("#ckEnvH").textContent=on?"Entrega en Villa María":"Envío gratis a sucursal";["#ck_prov","#ck_cp"].forEach(s=>$(s).style.display=on?"none":"")};
-  $("#ck_loc").addEventListener("input",()=>{if(esVM()){$("#ck_corr").value="Villa María"}else if($("#ck_corr").value==="Villa María"){$("#ck_corr").value="Correo Argentino"}vm()});
-  $("#ck_corr").onchange=()=>{if($("#ck_corr").value==="Villa María"&&!esVM())$("#ck_loc").value="Villa María";vm()};
-  if(esVM())$("#ck_corr").value="Villa María";vm();
+  if(CK.corr==="Villa María")$("#ck_corr").value="Villa María";
+  const vm=()=>{const on=$("#ck_corr").value==="Villa María";$("#vmNote").style.display=on?"":"none";$("#ckEnvH").textContent=on?"Entrega en Villa María":"Envío gratis a sucursal";$("#envCA").style.display=on?"none":""};
+  $("#ck_corr").onchange=vm;vm();
+  const manual=on=>{$("#ck_loc").style.display=on?"":"none";$("#ck_sucTxt").style.display=on?"":"none";$("#ck_locs").style.display=on?"none":"";$("#ck_suc").style.display=on?"none":""};
+  const opt=(v,t,sel)=>`<option value="${String(v).replace(/"/g,"&quot;")}"${sel?" selected":""}>${t}</option>`;
+  async function cargarSuc(){const pc=$("#ck_prov").selectedOptions[0]?.dataset.c,lid=$("#ck_locs").value,S=$("#ck_suc");
+    $("#ck_loc").value=lid?$("#ck_locs").selectedOptions[0].textContent:"";
+    if(/^villa mar[ií]a$/i.test($("#ck_loc").value)&&pc==="X"){$("#ck_corr").value="Villa María";vm()}
+    S.disabled=true;S.innerHTML=opt("",lid?"Cargando sucursales…":"Elegí la sucursal de Correo");if(!lid)return;
+    try{const d=await fetch(`/api/sucursales?provincia=${pc}&localidad=${lid}`).then(r=>r.json());const L=d.sucursales||[];if(!L.length)throw 0;
+      S.innerHTML=opt("",L.length===1?"Sucursal de Correo":`Elegí la sucursal (${L.length})`)+L.map(x=>{const t=`${x.nombre} — ${x.direccion}${x.localidad&&x.localidad.toLowerCase()!==$("#ck_loc").value.toLowerCase()?", "+x.localidad:""}`;return opt(t,t,CK.suc===t||L.length===1)}).join("");S.disabled=false}
+    catch(e){manual(true)}}
+  async function cargarLocs(){const pc=$("#ck_prov").selectedOptions[0]?.dataset.c,Ls=$("#ck_locs");manual(false);
+    Ls.disabled=true;Ls.innerHTML=opt("",pc?"Cargando localidades…":"Localidad");$("#ck_suc").disabled=true;$("#ck_suc").innerHTML=opt("","Elegí la sucursal de Correo");if(!pc)return;
+    try{const d=await fetch(`/api/sucursales?provincia=${pc}`).then(r=>r.json());const L=d.localidades||[];if(!L.length)throw 0;
+      Ls.innerHTML=opt("","Localidad")+L.map(x=>opt(x.id,x.nombre,CK.locId===x.id)).join("");Ls.disabled=false;if(Ls.value)cargarSuc()}
+    catch(e){manual(true)}}
+  $("#ck_prov").onchange=()=>{CK.locId="";CK.suc="";cargarLocs()};$("#ck_locs").onchange=()=>{CK.suc="";cargarSuc()};
+  if(CK.prov){$("#ck_prov").value=CK.prov;cargarLocs()}
   $("#cFoot").innerHTML=`<div class="cfoot"><div class="trow"><span>Total a pagar</span><b id="ckTot">${fmt(t.li)}</b></div><div class="trow s" id="ckSub"><span>${TIENDA.cuotas} cuotas sin interés de</span><span>${fmt(Math.round(t.li/TIENDA.cuotas))}</span></div>
     <button class="btn block" id="ckGo" style="margin-top:18px">Pagar con Mercado Pago <span class="ar">→</span></button></div>`;
   $$("[name=pago]").forEach(r=>r.onchange=()=>{const mp=$("[name=pago]:checked").value==="mp";$("#ckTot").textContent=fmt(mp?t.li:t.ef);
     $("#ckSub").style.display=mp?"":"none";$("#ckGo").innerHTML=(mp?"Pagar con Mercado Pago":"Pagar por transferencia en Mercado Pago")+' <span class="ar">→</span>'});
   $("#ckGo").onclick=confirmar;$("#cPanel .pbody").scrollTop=0}
-async function confirmar(){const t=totales();const VM=$("#ck_corr").value==="Villa María";const req=VM?["nom","dni","tel","loc"]:["nom","dni","tel","prov","cp","loc"];let ok=true;
-  ["nom","dni","tel","mail","prov","cp","loc","corr"].forEach(k=>{const el=$("#ck_"+k);CK[k]=el.value.trim();if(el.tagName==="INPUT")el.classList.toggle("err",req.includes(k)&&!CK[k]);if(req.includes(k)&&!CK[k])ok=false});
+async function confirmar(){const t=totales();const VM=$("#ck_corr").value==="Villa María";let ok=true;
+  const man=$("#ck_sucTxt").style.display!=="none";
+  ["nom","dni","tel","mail","corr","prov"].forEach(k=>CK[k]=$("#ck_"+k).value.trim());
+  CK.loc=VM?"Villa María":$("#ck_loc").value.trim();CK.locId=man?"":$("#ck_locs").value;CK.suc=VM?"":(man?$("#ck_sucTxt").value:$("#ck_suc").value).trim();
+  const falta=[["#ck_nom",CK.nom],["#ck_dni",CK.dni],["#ck_tel",CK.tel]].concat(VM?[]:[["#ck_prov",CK.prov],[man?"#ck_loc":"#ck_locs",CK.loc],[man?"#ck_sucTxt":"#ck_suc",CK.suc]]);
+  $$(".ck .err").forEach(e=>e.classList.remove("err"));falta.forEach(([sel,val])=>{if(!val){ok=false;$(sel).classList.add("err")}});
   try{localStorage.setItem("ff_ck",JSON.stringify(CK))}catch(e){}
   if(!ok){toast("<span>Completá los datos marcados</span>");return}
   const mp=$("[name=pago]:checked").value==="mp";const total=mp?t.li:t.ef;
   let m=`¡Hola FF Perfumería!\nQuiero confirmar esta compra:\n\n*Pedido*\n`;
   t.ids.forEach(k=>{const p=PRODUCTOS[k];m+=`• ${cart[k]} × ${p.nombre} (${p.marca}) — ${fmt((mp?lista(p):p.precio)*cart[k])}\n`});
-  m+=`\n*Total: ${fmt(total)}*\nPago: ${mp?`Mercado Pago — ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(total/TIENDA.cuotas))}`:"Transferencia por Mercado Pago"}\n\n${VM?"*Entrega en Villa María — la coordinamos por acá*":`*Envío gratis a sucursal ${CK.corr}*`}\n${CK.nom} · DNI ${CK.dni}\nTel: ${CK.tel}${CK.mail?"\nEmail: "+CK.mail:""}\n${VM?CK.loc:`${CK.loc}, ${CK.prov} — CP ${CK.cp}`}`;
+  m+=`\n*Total: ${fmt(total)}*\nPago: ${mp?`Mercado Pago — ${TIENDA.cuotas} cuotas sin interés de ${fmt(Math.round(total/TIENDA.cuotas))}`:"Transferencia por Mercado Pago"}\n\n${VM?"*Entrega en Villa María — la coordinamos por acá*":"*Envío gratis a sucursal de Correo Argentino*"}\n${CK.nom} · DNI ${CK.dni}\nTel: ${CK.tel}${CK.mail?"\nEmail: "+CK.mail:""}\n${VM?CK.loc:`Retira en: ${CK.suc}\n${CK.loc}, ${CK.prov}`}`;
   if(TIENDA.mpEndpoint){const b=$("#ckGo");b.textContent="Conectando con Mercado Pago…";b.disabled=true;
     try{const r=await fetch(TIENDA.mpEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         modo:mp?"tarjeta":"transferencia",items:t.ids.map(k=>({title:`${PRODUCTOS[k].marca} ${PRODUCTOS[k].nombre}`,quantity:cart[k],unit_price:mp?lista(PRODUCTOS[k]):PRODUCTOS[k].precio,currency_id:"ARS"})),
-        payer:{name:CK.nom,email:CK.mail,phone:CK.tel,dni:CK.dni},envio:{correo:CK.corr,provincia:CK.prov,localidad:CK.loc,cp:CK.cp},total,volver:location.href.split("#")[0]})});
+        payer:{name:CK.nom,email:CK.mail,phone:CK.tel,dni:CK.dni},envio:{correo:VM?"Villa María":"Correo Argentino",provincia:CK.prov,localidad:CK.loc,sucursal:CK.suc},total,volver:location.href.split("#")[0]})});
       const d=await r.json();if(d.init_point){try{localStorage.setItem("ff_ultimo",m)}catch(e){}location.href=d.init_point;return}throw 0}
     catch(e){b.disabled=false;b.innerHTML=(mp?'Pagar con Mercado Pago':'Pagar por transferencia en Mercado Pago')+' <span class="ar">→</span>';m+=mp?"\n\n¿Me pasan el link de pago de Mercado Pago?":"\n\n¿Me pasan los datos para transferir?";open(wa(m),"_blank","noopener");return}}
   if(mp)m+=`\n\n¿Me pasan el link de pago de Mercado Pago?`;

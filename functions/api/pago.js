@@ -63,7 +63,7 @@ export async function onRequest({ request, env }) {
       external_reference: ref + (transferencia ? "-TR" : ""),
       metadata: {
         cliente: p.name, telefono: p.phone, dni: p.dni, email: p.email,
-        correo: e.correo, provincia: e.provincia, localidad: e.localidad, cp: e.cp,
+        correo: e.correo, provincia: e.provincia, localidad: e.localidad, sucursal: String(e.sucursal || "").slice(0, 200), cp: e.cp,
       },
       ...(volver.startsWith("https://") ? {
         back_urls: {
